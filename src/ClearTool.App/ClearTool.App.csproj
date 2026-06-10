@@ -8,6 +8,7 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <AssemblyTitle>ClearTool</AssemblyTitle>
     <Product>ClearTool</Product>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

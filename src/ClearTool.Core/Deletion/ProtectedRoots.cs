@@ -131,6 +131,15 @@ public sealed class ProtectedRoots
             list.Add(Canonical(expanded));
     }
 
-    private static string Canonical(string path) =>
-        Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+    /// <summary>
+    /// "C:" (thiếu "\") là drive-relative path: GetFullPath sẽ resolve theo
+    /// thư mục hiện hành của process trên ổ đó — kết quả phụ thuộc cwd.
+    /// Với mục đích an toàn, hiểu "C:" là root ổ đĩa.
+    /// </summary>
+    internal static string Canonical(string path)
+    {
+        if (path.Length == 2 && path[1] == ':' && char.IsAsciiLetter(path[0]))
+            path += Path.DirectorySeparatorChar;
+        return Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+    }
 }

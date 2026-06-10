@@ -28,7 +28,7 @@ public sealed class DeletionService(ProtectedRoots protectedRoots) : IDeletionSe
         string path;
         try
         {
-            path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rawPath));
+            path = ProtectedRoots.Canonical(rawPath);
         }
         catch (Exception ex)
         {
