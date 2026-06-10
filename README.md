@@ -1,5 +1,9 @@
 # ClearTool
 
+[![Latest release](https://img.shields.io/github/v/release/xShiroeNguyenx/clear-tool?label=download&logo=github)](https://github.com/xShiroeNguyenx/clear-tool/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d4)
+
 **A safe, treemap-based disk cleanup tool for Windows 11.**
 
 ClearTool scans an entire drive, visualizes disk usage as an interactive treemap (WinDirStat-style), classifies files and folders by deletion safety, and lets you reclaim space with confidence — deletions go to the Recycle Bin by default, and a multi-layer protection system makes it impossible to delete system-critical paths.
@@ -29,7 +33,11 @@ Built with **.NET 10 (LTS)** + **WPF** + [WPF-UI](https://github.com/lepoco/wpfu
 
 ### Run
 
-Download `ClearTool.App.exe` from Releases (self-contained single file, ~75 MB) and run it — **no .NET runtime installation required**. Windows 10/11 x64.
+**[⬇ Download ClearTool.App.exe](https://github.com/xShiroeNguyenx/clear-tool/releases/latest/download/ClearTool.App.exe)** (latest release — self-contained single file, ~75 MB) and just run it — **no .NET runtime installation required**. Windows 10/11 x64.
+
+All versions: [Releases page](https://github.com/xShiroeNguyenx/clear-tool/releases).
+
+> Windows SmartScreen may warn on first run because the exe is unsigned — click *More info → Run anyway*.
 
 ### Build from source
 
