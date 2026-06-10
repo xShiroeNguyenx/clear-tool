@@ -1,0 +1,15 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Palette ngữ nghĩa Safe/Caution/Keep — KHÔNG freeze: SafetyPalette.Apply()
+         mutate .Color khi đổi theme sáng/tối (row đã render tự đổi màu live).
+         Giá trị khởi tạo = light theme. -->
+    <SolidColorBrush x:Key="SafeBrush" Color="#2E7D32"/>
+    <SolidColorBrush x:Key="SafeLightBrush" Color="#E8F5E9"/>
+    <SolidColorBrush x:Key="CautionBrush" Color="#F9A825"/>
+    <SolidColorBrush x:Key="CautionLightBrush" Color="#FFF8E1"/>
+    <SolidColorBrush x:Key="KeepBrush" Color="#C62828"/>
+    <SolidColorBrush x:Key="KeepLightBrush" Color="#FFEBEE"/>
+    <SolidColorBrush x:Key="UnknownBrush" Color="#757575"/>
+
+</ResourceDictionary>

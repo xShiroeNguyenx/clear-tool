@@ -1,0 +1,298 @@
+<ui:FluentWindow x:Class="ClearTool.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:conv="clr-namespace:ClearTool.App.Converters"
+        xmlns:controls="clr-namespace:ClearTool.App.Controls"
+        xmlns:vm="clr-namespace:ClearTool.App.ViewModels"
+        Title="ClearTool — Dọn ổ đĩa"
+        Width="1160" Height="760"
+        MinWidth="900" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round">
+
+    <Window.Resources>
+        <conv:BytesToHumanReadableConverter x:Key="Bytes"/>
+        <conv:SafetyLevelToBrushConverter x:Key="LevelBrush"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── TitleBar (Mica, kéo được) ──────────────────────────────────── -->
+        <!-- WPF-UI 4.x TitleBar KHÔNG render chuỗi Title — phải tự đặt vào Header -->
+        <ui:TitleBar Grid.Row="0" Title="ClearTool — Dọn ổ đĩa">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/icon-256.png"/>
+            </ui:TitleBar.Icon>
+            <ui:TitleBar.Header>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ClearTool — Dọn ổ đĩa" FontSize="13"
+                               VerticalAlignment="Center"/>
+                    <Border Background="{StaticResource CautionLightBrush}"
+                            CornerRadius="10" Padding="8,2" Margin="10,0,8,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsAdministrator, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Shield16" FontSize="12"
+                                           Foreground="{StaticResource CautionBrush}"/>
+                            <TextBlock Text="Administrator" FontSize="11" Margin="4,0,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
+
+        <!-- ── Header card: chọn ổ + hành động quét + trạng thái ─────────── -->
+        <Border Grid.Row="1" Margin="14,4,14,10" Padding="14,12"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8">
+            <StackPanel>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="Ổ đĩa" VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <ComboBox DockPanel.Dock="Left" MinWidth="96" VerticalAlignment="Center"
+                          ItemsSource="{Binding Drives}"
+                          SelectedItem="{Binding SelectedDrive}"/>
+                <ui:Button DockPanel.Dock="Left" Margin="10,0,0,0" MinWidth="100"
+                           Appearance="Primary"
+                           Icon="{ui:SymbolIcon Play24}"
+                           Content="Quét"
+                           Command="{Binding ScanCommand}"/>
+                <ui:Button DockPanel.Dock="Left" Margin="6,0,0,0"
+                           Icon="{ui:SymbolIcon Dismiss24}"
+                           Content="Hủy"
+                           Command="{Binding CancelScanCommand}"/>
+                <TextBlock DockPanel.Dock="Left" Text="Chi tiết" Margin="16,0,8,0"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <ComboBox DockPanel.Dock="Left" MinWidth="92" VerticalAlignment="Center"
+                          ItemsSource="{Binding TreemapDepthChoices}"
+                          SelectedItem="{Binding TreemapDepth}"
+                          ToolTip="Số cấp thư mục lồng nhau vẽ trên treemap — càng nhiều cấp càng chi tiết, ít cấp thì thoáng và nhanh hơn">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding StringFormat='{}{0} cấp'}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <ui:ProgressRing DockPanel.Dock="Left" Width="20" Height="20" Margin="14,0,0,0"
+                                 IsIndeterminate="True" VerticalAlignment="Center"
+                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+                           Text="{Binding StatusText}" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding StatusText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </DockPanel>
+
+            <!-- Dòng giải thích phần không quét được + gợi ý chạy admin -->
+            <DockPanel Margin="2,8,0,0"
+                       Visibility="{Binding HasInaccessibleInfo, Converter={StaticResource BoolToVis}}">
+                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Info16" Margin="0,0,6,0"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <ui:HyperlinkButton DockPanel.Dock="Right" Padding="4,0" FontSize="12"
+                                    Content="Chạy lại với quyền Administrator để quét được nhiều hơn"
+                                    Command="{Binding RestartAsAdministratorCommand}"
+                                    Visibility="{Binding IsNotAdministrator, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="{Binding InaccessibleInfo}" FontSize="12"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding InaccessibleInfo}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+            </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Nội dung: treemap card + suggestion card ───────────────────── -->
+        <Grid Grid.Row="2" Margin="14,0,14,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Treemap card -->
+            <Border Grid.Column="0" Margin="0,0,10,0"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Breadcrumb + Back -->
+                    <DockPanel Grid.Row="0" Margin="10,8">
+                        <ui:Button DockPanel.Dock="Left" Margin="0,0,8,0" Padding="6,4"
+                                   Icon="{ui:SymbolIcon ArrowLeft24}"
+                                   ToolTip="Quay lại thư mục cha"
+                                   Command="{Binding NavigateBackCommand}"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Disabled"
+                                      VerticalAlignment="Center">
+                            <ItemsControl ItemsSource="{Binding Breadcrumbs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="{Binding Name}" Padding="4,1"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand"
+                                                    Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                    Command="{Binding DataContext.NavigateToCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <TextBlock Text="›" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+
+                    <!-- Treemap -->
+                    <controls:TreemapControl x:Name="Treemap" Grid.Row="1" Margin="10,0,10,0"
+                                             Root="{Binding TreemapRoot}"
+                                             MaxDepth="{Binding TreemapDepth}"
+                                             SelectedNode="{Binding SelectedTreemapNode, Mode=TwoWay}"
+                                             NodeActivated="OnTreemapNodeActivated"/>
+
+                    <!-- Chi tiết node đang chọn -->
+                    <Border Grid.Row="2" Margin="10,8,10,10" Padding="10,6" CornerRadius="6"
+                            Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                        <DockPanel>
+                            <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Info16" Margin="0,0,8,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Text="{Binding SelectedNodeInfo}" FontSize="12"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding SelectedNodeInfo}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Suggestion card: mỗi nhóm một tab (An toàn / Cân nhắc) -->
+            <Border Grid.Column="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <TabControl ItemsSource="{Binding SuggestionGroups}"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="0" Margin="4">
+                    <!-- Header tab: thanh màu + icon + tên nhóm + tổng -->
+                    <TabControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:SuggestionGroupViewModel}">
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="4" Height="16" RadiusX="2" RadiusY="2"
+                                           VerticalAlignment="Center"
+                                           Fill="{Binding Level, Converter={StaticResource LevelBrush}}"/>
+                                <ui:SymbolIcon Symbol="{Binding HeaderSymbol}" Margin="6,0,5,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Level, Converter={StaticResource LevelBrush}}"/>
+                                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="12"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <!-- Nội dung tab: checkbox cả nhóm + danh sách item -->
+                    <TabControl.ContentTemplate>
+                        <DataTemplate DataType="{x:Type vm:SuggestionGroupViewModel}">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Top" Padding="12,8"
+                                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <CheckBox Content="Chọn cả nhóm" FontSize="12"
+                                              IsChecked="{Binding IsGroupSelected}"/>
+                                </Border>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:SuggestionItemViewModel}">
+                                                <Border Padding="12,6" Background="Transparent"
+                                                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                                                        BorderThickness="0,0,0,1"
+                                                        MouseLeftButtonUp="OnSuggestionRowClick">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox Grid.Column="0" VerticalAlignment="Top" Margin="0,1,8,0"
+                                                                  IsChecked="{Binding IsSelected}"/>
+                                                        <StackPanel Grid.Column="1">
+                                                            <DockPanel>
+                                                                <ui:SymbolIcon DockPanel.Dock="Right" Symbol="Shield16"
+                                                                               ToolTip="Cần quyền Administrator"
+                                                                               Foreground="{StaticResource CautionBrush}"
+                                                                               Visibility="{Binding NeedsAdmin, Converter={StaticResource BoolToVis}}"/>
+                                                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12"/>
+                                                            </DockPanel>
+                                                            <TextBlock Text="{Binding FullPath}" Style="{StaticResource PathTextStyle}"
+                                                                       ToolTip="{Binding FullPath}"/>
+                                                            <TextBlock Text="{Binding Reason}" FontSize="11" TextWrapping="Wrap"
+                                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Top"
+                                                                   Text="{Binding ReclaimableBytes, Converter={StaticResource Bytes}}"
+                                                                   Style="{StaticResource SizeTextStyle}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+            </Border>
+        </Grid>
+
+        <!-- ── Action bar ─────────────────────────────────────────────────── -->
+        <Border Grid.Row="3" Margin="14,10,14,14" Padding="14,10"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8">
+            <DockPanel>
+                <ui:Button DockPanel.Dock="Right"
+                           Appearance="Danger"
+                           Icon="{ui:SymbolIcon Delete24}"
+                           Content="Xóa mục đã chọn"
+                           FontWeight="SemiBold"
+                           Command="{Binding DeleteSelectedCommand}"/>
+                <ui:Button DockPanel.Dock="Right" Margin="0,0,8,0"
+                           Icon="{ui:SymbolIcon Broom24}"
+                           Content="Dọn Thùng rác"
+                           ToolTip="Dọn sạch Thùng rác của ổ đang chọn — bước thực sự giải phóng dung lượng"
+                           Command="{Binding EmptyRecycleBinCommand}"/>
+                <ui:Button DockPanel.Dock="Right" Margin="0,0,8,0"
+                           Icon="{ui:SymbolIcon Shield24}"
+                           Content="Dọn WinSxS"
+                           ToolTip="DISM StartComponentCleanup — dọn thành phần Windows cũ (cần Administrator)"
+                           Command="{Binding CleanWinSxsCommand}"/>
+                <TextBlock VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"
+                           Text="{Binding FooterText}"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,69 @@
+<ui:FluentWindow x:Class="ClearTool.App.Views.ConfirmDeleteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="Xác nhận xóa"
+        Width="460" Height="340"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Xác nhận xóa"
+                     ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="Delete20"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <StackPanel Grid.Row="1" Margin="20,8,20,16">
+            <TextBlock x:Name="SummaryText" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+            <RadioButton x:Name="RecycleBinRadio" IsChecked="True" Margin="0,0,0,6">
+                <TextBlock TextWrapping="Wrap">
+                    <Run FontWeight="SemiBold" Text="Đưa vào Thùng rác (khuyến nghị)"/>
+                    <LineBreak/>
+                    <Run FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                         Text="Khôi phục được. Lưu ý: CHƯA giải phóng dung lượng cho tới khi dọn Thùng rác."/>
+                </TextBlock>
+            </RadioButton>
+
+            <RadioButton x:Name="PermanentRadio" Margin="0,0,0,12">
+                <TextBlock TextWrapping="Wrap">
+                    <Run FontWeight="SemiBold" Foreground="{StaticResource KeepBrush}" Text="Xóa vĩnh viễn"/>
+                    <LineBreak/>
+                    <Run FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                         Text="Giải phóng dung lượng ngay — KHÔNG khôi phục được."/>
+                </TextBlock>
+            </RadioButton>
+
+            <Border x:Name="AdminWarning" Background="{StaticResource CautionLightBrush}"
+                    BorderBrush="{StaticResource CautionBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12"
+                    Visibility="Collapsed">
+                <DockPanel>
+                    <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Shield24" Margin="0,0,8,0"
+                                   VerticalAlignment="Top"
+                                   Foreground="{StaticResource CautionBrush}"/>
+                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                               Text="Một số mục cần quyền Administrator — sẽ hiện hộp thoại UAC riêng cho từng tác vụ."/>
+                </DockPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button Content="Hủy" MinWidth="90" Margin="0,0,8,0" IsCancel="True"/>
+                <ui:Button x:Name="ConfirmButton" Content="Xóa" MinWidth="90" IsDefault="True"
+                           Appearance="Danger"
+                           Icon="{ui:SymbolIcon Delete24}"
+                           Click="OnConfirmClick"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>
