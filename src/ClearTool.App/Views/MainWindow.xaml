@@ -236,6 +236,7 @@
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1" CornerRadius="8">
+                <Grid>
                 <TabControl ItemsSource="{Binding SuggestionGroups}"
                             Background="Transparent" BorderThickness="0"
                             Padding="0" Margin="4">
@@ -264,8 +265,28 @@
                                     <CheckBox Content="Chọn cả nhóm" FontSize="12"
                                               IsChecked="{Binding IsGroupSelected}"/>
                                 </Border>
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding Items}">
+                                <!-- Virtualize: nhóm có hàng nghìn mục chỉ dựng các hàng
+                                     đang nhìn thấy → hiện ngay thay vì đơ UI rồi mới hiện hết -->
+                                <ItemsControl ItemsSource="{Binding Items}"
+                                              ScrollViewer.CanContentScroll="True"
+                                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                              VirtualizingPanel.IsVirtualizing="True"
+                                              VirtualizingPanel.VirtualizationMode="Recycling"
+                                              VirtualizingPanel.ScrollUnit="Pixel">
+                                        <ItemsControl.Template>
+                                            <ControlTemplate TargetType="ItemsControl">
+                                                <ScrollViewer CanContentScroll="True" Focusable="False"
+                                                              Padding="{TemplateBinding Padding}">
+                                                    <ItemsPresenter/>
+                                                </ScrollViewer>
+                                            </ControlTemplate>
+                                        </ItemsControl.Template>
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate DataType="{x:Type vm:SuggestionItemViewModel}">
                                                 <Border Padding="12,6" Background="Transparent"
@@ -300,12 +321,30 @@
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
+                                </ItemsControl>
                             </DockPanel>
                         </DataTemplate>
                     </TabControl.ContentTemplate>
                 </TabControl>
+
+                    <!-- Overlay loading: che 2 tab trong lúc quét/phân loại để
+                         người dùng biết app đang chạy, không tưởng bị lỗi -->
+                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            Visibility="{Binding IsLoadingResults, Converter={StaticResource BoolToVis}}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Margin="20">
+                            <ui:ProgressRing IsIndeterminate="True" Width="34" Height="34"
+                                             HorizontalAlignment="Center"/>
+                            <TextBlock Text="Đang quét và lập danh sách gợi ý…" Margin="0,14,0,0"
+                                       FontWeight="SemiBold" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Text="{Binding StatusText}" FontSize="11" Margin="0,4,0,0"
+                                       MaxWidth="280" TextAlignment="Center" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 

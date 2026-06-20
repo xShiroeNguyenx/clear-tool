@@ -168,6 +168,12 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(EmptyRecycleBinCommand))]
     private bool _isScanning;
 
+    /// <summary>True từ lúc bắt đầu quét đến khi gợi ý dựng xong — hiện overlay
+    /// loading trên thẻ gợi ý để user không tưởng bị lỗi. Tách khỏi
+    /// <see cref="IsScanning"/> để KHÔNG che danh sách khi đang xóa.</summary>
+    [ObservableProperty]
+    private bool _isLoadingResults;
+
     /// <summary>Độ sâu hiển thị treemap (4–8).</summary>
     [ObservableProperty]
     private int _treemapDepth = 6;
@@ -281,6 +287,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         _scanCts = new CancellationTokenSource();
         IsScanning = true;
+        IsLoadingResults = true;
         SuggestionGroups = [];
         TotalSelectedBytes = 0;
         TreemapRoot = null;
@@ -324,6 +331,7 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             IsScanning = false;
+            IsLoadingResults = false;
             _scanCts.Dispose();
             _scanCts = null;
         }
