@@ -1,5 +1,6 @@
 # ClearTool
 
+[![CI](https://github.com/xShiroeNguyenx/clear-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/xShiroeNguyenx/clear-tool/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/xShiroeNguyenx/clear-tool?label=download&logo=github)](https://github.com/xShiroeNguyenx/clear-tool/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d4)
@@ -63,6 +64,21 @@ dotnet publish src\ClearTool.App\ClearTool.App.csproj -c Release -r win-x64 `
 ```
 
 > Note: `PublishTrimmed`/AOT are intentionally **not** used — WPF does not support them.
+
+### CI/CD
+
+GitHub Actions ([.github/workflows/](.github/workflows/)):
+
+- **CI** (`ci.yml`) — every push / PR to `main` builds the solution in Release and runs the full unit-test suite on `windows-latest`.
+- **Release** (`release.yml`) — pushing a `v*` tag automatically runs the tests, publishes the self-contained single-file exe (with the version stamped from the tag), and creates a GitHub Release with `ClearTool.App.exe` attached. The asset name is fixed so the in-app auto-updater always finds it.
+
+Cutting a release is therefore just:
+
+```powershell
+# bump <Version> in src/ClearTool.App/ClearTool.App.csproj, commit, then:
+git tag v1.2.0
+git push origin v1.2.0   # → CI builds + publishes the release for you
+```
 
 ## Architecture
 

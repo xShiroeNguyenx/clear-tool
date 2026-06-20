@@ -1,0 +1,56 @@
+name: Release
+
+# Push một tag dạng v* (vd v1.1.1) là tự động:
+#   test → build exe self-contained 1 file → tạo GitHub Release kèm ClearTool.App.exe.
+# Asset luôn tên ClearTool.App.exe để tính năng tự cập nhật trong app tải đúng
+# qua URL cố định releases/latest/download/ClearTool.App.exe.
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write   # cần quyền ghi để tạo release
+
+jobs:
+  release:
+    name: Publish & Release (win-x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Lấy version từ tag (v1.1.1 -> 1.1.1) để đóng đúng số version vào exe.
+      # Nhờ vậy version trong exe LUÔN khớp tag → so sánh tự-update không bao giờ lệch.
+      - name: Resolve version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Test (gate trước khi phát hành)
+        run: dotnet test ClearTool.sln -c Release
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish src/ClearTool.App/ClearTool.App.csproj
+          -c Release -r win-x64
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PublishSingleFile=true -p:SelfContained=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o publish
+
+      # Dùng gh CLI (đã cài sẵn trên runner) — không phụ thuộc action bên thứ ba.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" publish/ClearTool.App.exe \
+            --title "ClearTool $GITHUB_REF_NAME" \
+            --generate-notes
