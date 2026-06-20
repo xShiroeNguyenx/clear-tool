@@ -56,6 +56,7 @@ public partial class App : Application
         services.AddSingleton<ProtectedRoots>();
         services.AddSingleton<IDeletionService, DeletionService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         _services = services.BuildServiceProvider();
@@ -71,6 +72,10 @@ public partial class App : Application
         AppLog.Info("OnStartup: MainWindow tạo xong, Show()");
         window.Show();
         AppLog.Info("OnStartup: Show() xong");
+
+        // Kiểm tra cập nhật ngầm sau khi UI đã hiện — lỗi/không mạng thì im lặng.
+        var mainViewModel = _services.GetRequiredService<MainViewModel>();
+        _ = mainViewModel.CheckForUpdatesCommand.ExecuteAsync(null);
     }
 
     protected override void OnExit(ExitEventArgs e)

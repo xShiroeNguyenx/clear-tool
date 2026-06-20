@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,6 +19,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly RuleEngine _ruleEngine;
     private readonly IDeletionService _deletionService;
     private readonly IDialogService _dialogService;
+    private readonly IUpdateService _updateService;
 
     private CancellationTokenSource? _scanCts;
     private TreeNode? _scanRoot;
@@ -26,12 +28,14 @@ public sealed partial class MainViewModel : ObservableObject
         IFileSystemScanner scanner,
         RuleEngine ruleEngine,
         IDeletionService deletionService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IUpdateService updateService)
     {
         _scanner = scanner;
         _ruleEngine = ruleEngine;
         _deletionService = deletionService;
         _dialogService = dialogService;
+        _updateService = updateService;
 
         Drives = new ObservableCollection<string>(
             DriveInfo.GetDrives()
@@ -65,6 +69,92 @@ public sealed partial class MainViewModel : ObservableObject
             System.Windows.Application.Current.Shutdown();
         // user hủy UAC → giữ nguyên instance hiện tại
     }
+
+    // ── Tự cập nhật (GitHub Releases) ───────────────────────────────────
+
+    private UpdateInfo? _availableUpdate;
+
+    /// <summary>Có bản mới hơn → hiện banner cập nhật.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DownloadAndUpdateCommand))]
+    private bool _isUpdateAvailable;
+
+    [ObservableProperty]
+    private string _updateBannerText = "";
+
+    /// <summary>Đang tải/áp dụng bản mới → hiện vòng quay, khóa nút.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DownloadAndUpdateCommand))]
+    private bool _isUpdating;
+
+    [ObservableProperty]
+    private string? _updateProgressText;
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        var update = await _updateService.CheckForUpdateAsync();
+        if (update is null)
+            return;
+        _availableUpdate = update;
+        UpdateBannerText = $"Đã có bản mới {update.TagName} — bạn đang dùng v{_updateService.CurrentVersion}.";
+        IsUpdateAvailable = true;
+    }
+
+    private bool CanDownloadAndUpdate() => IsUpdateAvailable && !IsUpdating;
+
+    [RelayCommand(CanExecute = nameof(CanDownloadAndUpdate))]
+    private async Task DownloadAndUpdateAsync()
+    {
+        if (_availableUpdate is null)
+            return;
+
+        IsUpdating = true;
+        UpdateProgressText = "Đang tải bản cập nhật...";
+        try
+        {
+            var progress = new Progress<double>(p =>
+                UpdateProgressText = $"Đang tải bản cập nhật... {p * 100:0}%");
+
+            if (await _updateService.DownloadAndApplyAsync(_availableUpdate, progress))
+            {
+                // Script trung gian đang chờ tiến trình này thoát để ghi đè exe.
+                UpdateProgressText = "Đang khởi động lại để áp dụng bản mới...";
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                IsUpdating = false;
+                UpdateProgressText = null;
+                OpenReleaseNotes();
+            }
+        }
+        catch (Exception ex)
+        {
+            IsUpdating = false;
+            UpdateProgressText = null;
+            await _dialogService.ShowErrorAsync("Lỗi cập nhật",
+                $"Tải/cập nhật thất bại: {ex.Message}\n\nBạn có thể tải bản mới thủ công từ trang Releases.");
+        }
+    }
+
+    [RelayCommand]
+    private void OpenReleaseNotes()
+    {
+        var url = _availableUpdate?.ReleasePageUrl
+                  ?? "https://github.com/xShiroeNguyenx/clear-tool/releases/latest";
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("OpenReleaseNotes", ex);
+        }
+    }
+
+    [RelayCommand]
+    private void DismissUpdate() => IsUpdateAvailable = false;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ScanCommand))]

@@ -23,6 +23,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -52,8 +53,48 @@
             </ui:TitleBar.Header>
         </ui:TitleBar>
 
+        <!-- ── Banner: có bản cập nhật mới (GitHub Releases) ─────────────── -->
+        <Border Grid.Row="1" Margin="14,4,14,0" Padding="12,8" CornerRadius="8"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource AccentTextFillColorSecondaryBrush}"
+                BorderThickness="1"
+                Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="ArrowDownload24" Margin="0,0,10,0"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+
+                <!-- Cụm nút bên phải (khai báo trước = nằm sát mép phải hơn) -->
+                <ui:Button DockPanel.Dock="Right" Margin="6,0,0,0"
+                           Appearance="Primary"
+                           Icon="{ui:SymbolIcon ArrowDownload24}"
+                           Content="Tải &amp; cập nhật"
+                           Command="{Binding DownloadAndUpdateCommand}"/>
+                <ui:Button DockPanel.Dock="Right" Margin="6,0,0,0"
+                           Appearance="Secondary"
+                           Content="Xem thay đổi"
+                           Command="{Binding OpenReleaseNotesCommand}"/>
+                <ui:Button DockPanel.Dock="Right" Margin="6,0,0,0"
+                           Appearance="Transparent" Padding="6"
+                           Icon="{ui:SymbolIcon Dismiss24}"
+                           ToolTip="Ẩn thông báo"
+                           Command="{Binding DismissUpdateCommand}"/>
+                <ui:ProgressRing DockPanel.Dock="Right" Width="18" Height="18" Margin="8,0,0,0"
+                                 IsIndeterminate="True" VerticalAlignment="Center"
+                                 Visibility="{Binding IsUpdating, Converter={StaticResource BoolToVis}}"/>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding UpdateBannerText}" FontWeight="SemiBold" FontSize="13"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding UpdateProgressText}" FontSize="11"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               Visibility="{Binding IsUpdating, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
         <!-- ── Header card: chọn ổ + hành động quét + trạng thái ─────────── -->
-        <Border Grid.Row="1" Margin="14,4,14,10" Padding="14,12"
+        <Border Grid.Row="2" Margin="14,4,14,10" Padding="14,12"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8">
@@ -115,7 +156,7 @@
         </Border>
 
         <!-- ── Nội dung: treemap card + suggestion card ───────────────────── -->
-        <Grid Grid.Row="2" Margin="14,0,14,0">
+        <Grid Grid.Row="3" Margin="14,0,14,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*"/>
                 <ColumnDefinition Width="2*"/>
@@ -269,7 +310,7 @@
         </Grid>
 
         <!-- ── Action bar ─────────────────────────────────────────────────── -->
-        <Border Grid.Row="3" Margin="14,10,14,14" Padding="14,10"
+        <Border Grid.Row="4" Margin="14,10,14,14" Padding="14,10"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8">

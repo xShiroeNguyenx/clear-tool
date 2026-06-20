@@ -28,6 +28,7 @@ Built with **.NET 10 (LTS)** + **WPF** + [WPF-UI](https://github.com/lepoco/wpfu
 - ♻️ **Empty Recycle Bin** — deleting to the bin doesn't free space until the bin is emptied; ClearTool says so honestly and provides a one-click "Empty Recycle Bin" with size preview (`SHQueryRecycleBin` / `SHEmptyRecycleBin`).
 - 📊 **Transparency** — after a scan, the gap between Windows' "used space" and the scanned total is shown ("≈ X GB inaccessible — shadow copies, junctions, NTFS metadata"), with a one-click *restart as Administrator* to scan more.
 - 🌗 **Fluent / Windows 11 UI** — Mica window, theme follows the system (live light/dark switching re-tints the whole app including the treemap), tabbed suggestion groups.
+- 🔄 **Built-in auto-update** — on launch ClearTool silently asks the GitHub Releases API for the latest version; if a newer one exists it shows a one-line banner with **Tải & cập nhật** (download & update). One click downloads the new single-file exe, then a tiny helper script waits for the app to exit, swaps the exe in place, and relaunches — no manual reinstall. Network/offline errors are swallowed so the check never nags. Version comparison is numeric (`1.10.0 > 1.9.0`) and unit-tested.
 
 ## Getting started
 
